@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stalcraft Price Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #252525, #1e1e1e);
+            color: #eee;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .app-container {
+            background-color: #333;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 95%;
+            max-width: 400px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .app-header { padding: 10px 0; text-align: center; }
+        .app-nav {
+            background-color: #444;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .app-nav::-webkit-scrollbar { display: none; }
+        .app-nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+        .app-nav li { margin-right: 10px; }
+        .app-nav a {
+            color: #ccc;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .app-nav a.active { background-color: #555; color: white; }
+
+        .app-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex-grow: 1;
+            scrollbar-width: none;
+            cursor: grab;
+        }
+        .app-content::-webkit-scrollbar { display: none; }
+
+        .app-section {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .app-section.active {
+            display: block;
+            opacity: 1;
+            animation: slide-in 0.4s ease-in-out;
+        }
+        @keyframes slide-in {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        .app-footer { padding: 20px 0; text-align: center; font-size: 0.8em; color: #888; }
+
+        .filter-options label,
+        .filter-options select,
+        .filter-options input,
+        button {
+            margin-bottom: 15px;
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background-color: #444;
+            color: #ddd;
+            font-size: 1em;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #555;
+            color: white;
+            border-color: #666;
+            cursor: pointer;
+        }
+
+        .tracked-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border: 1px solid #555;
+            background-color: #383838;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .tracked-item.profitable { background-color: #27ae60; }
+        .tracked-item.unprofitable { background-color: #c0392b; }
+        .tracked-item:hover { background-color: #444; }
+        .tracked-item-name { flex-grow: 1; margin-right: 10px; }
+
+        #search-item {
+            width: calc(100% - 22px);
+            padding: 8px 10px;
+            border: 1px solid #555;
+            border-radius: 20px;
+            background-color: #444;
+            color: #eee;
+            outline: none;
+        }
+
+        .item-details {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .item-details .item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            color: #eee;
+            border-bottom: 1px solid #555;
+            background-color: #383838;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .item-details .item:last-child { margin-bottom: 0; }
+        .item-details .item h3 { margin: 0 0 5px 0; font-size: 1em; flex-grow: 1; }
+        .item-details .price-input { margin-left: auto; display: flex; align-items: center; }
+        .item-details input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #555;
+            color: #eee;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        .item-details button.track-button {
+            background-color: #007bff;
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        .item-details button.track-button:hover { background-color: #0056b3; }
+
+        /* Стили для фильтров */
+        .filter-toggle {
+            background-color: #555;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .filter-toggle:hover { background-color: #666; }
+        .filter-options {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+            margin-bottom: 15px;
+        }
+        .filter-options.open { max-height: 200px; } /* Указываем примерную высоту для анимации */
+        .filter-options input[type="number"] { width: calc(50% - 10px); display: inline-block; }
+        .filter-options input[type="number"]:first-child { margin-right: 10px; }
+        .filter-options select { width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Stalcraft Price Tracker</h1>
+        </header>
+        <nav class="app-nav">
+            <ul>
+                <li><a href="#profile" class="active">Кабинет</a></li>
+                <li><a href="#instructions">Инструкция</a></li>
+                <li><a href="#filtering">Предметы</a></li>
+                <li><a href="#tracking">Отслеживаемое</a></li>
+                <li><a href="#pricing">Тарифы</a></li>
+            </ul>
+        </nav>
+        <main class="app-content" id="app-content">
+            <section id="profile" class="app-section active">
+                <h2>Кабинет</h2>
+                <p>Уровень подписки: <span class="subscription-info">Обычная</span></p>
+                <p>Действует до: <span class="subscription-info">2024-01-15</span></p>
+                <p>Слоты: <span class="subscription-info">44/100</span></p>
+                <button id="contact-support">Поддержка</button>
+            </section>
+            <section id="instructions" class="app-section">
+                <h2>Инструкция</h2>
+            </section>
+            <section id="filtering" class="app-section">
+                <h2>Предметы</h2>
+                <button class="filter-toggle">Фильтры</button>
+                <div class="filter-options">
+                    <input type="number" id="min-price" placeholder="Мин. цена">
+                    <input type="number" id="max-price" placeholder="Макс. цена">
+                    <input type="number" id="discount" placeholder="Скидка (%)">
+                    <select id="category">
+                        <option value="">Все категории</option>
+                        <option value="weapon">Оружие</option>
+                        <option value="armor">Броня</option>
+                    </select>
+                </div>
+                <input type="text" id="search-item" placeholder="Поиск предмета">
+                <div class="item-details"></div>
+            </section>
+            <section id="tracking" class="app-section">
+                <h2>Отслеживаемое</h2>
+                <div id="tracked-items-container"></div>
+            </section>
+            <section id="pricing" class="app-section">
+                <h2>Тарифы</h2>
+                <table class="pricing-table">
+                    <thead>
+                        <tr>
+                            <th>Опция</th>
+                            <th>Обычный</th>
+                            <th>Продвинутый</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Цена</td><td>500 руб</td><td>1000 руб</td></tr>
+                        <tr><td>Задержка отправки</td><td>3-5 секунд</td><td><img src="ix.png" alt="Cross"></td></tr>
+                        <tr><td>Доступ на 24 часа</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
+                        <tr><td>Копирование названия по клику</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
+                        <tr><td>Расширенная статистика</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
+                        <tr><td>Статистика по стакам</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+        <footer class="app-footer"></footer>
+    </div>
+    <script>
+        const navLinks = document.querySelectorAll('.app-nav a');
+        const sections = document.querySelectorAll('.app-section');
+        const appContent = document.getElementById('app-content');
+        const searchInput = document.getElementById('search-item');
+        const itemDetails = document.querySelector('#filtering .item-details');
+        const trackedItemsContainer = document.getElementById('tracked-items-container');
+        const minPriceInput = document.getElementById('min-price');
+        const maxPriceInput = document.getElementById('max-price');
+        const discountInput = document.getElementById('discount');
+        const categorySelect = document.getElementById('category');
+        const filterToggle = document.querySelector('.filter-toggle');
+        const filterOptions = document.querySelector('.filter-options');
+
+        // Навигация
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                document.querySelector(link.getAttribute('href')).classList.add('active');
+            });
+        });
+
+        // Drag-скроллинг
+        let isDragging = false, startX, scrollLeft;
+        appContent.addEventListener('mousedown', e => {
+            isDragging = true;
+            startX = e.pageX - appContent.offsetLeft;
+            scrollLeft = appContent.scrollLeft;
+            appContent.style.cursor = 'grabbing';
+        });
+        appContent.addEventListener('mouseleave', () => { isDragging = false; appContent.style.cursor = 'grab'; });
+        appContent.addEventListener('mouseup', () => { isDragging = false; appContent.style.cursor = 'grab'; });
+        appContent.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const x = e.pageX - appContent.offsetLeft;
+            appContent.scrollLeft = scrollLeft - (x - startX) * 2;
+        });
+        appContent.addEventListener('touchstart', e => {
+            isDragging = true;
+            startX = e.touches[0].pageX - appContent.offsetLeft;
+            scrollLeft = appContent.scrollLeft;
+        });
+        appContent.addEventListener('touchend', () => { isDragging = false; });
+        appContent.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+            const x = e.touches[0].pageX - appContent.offsetLeft;
+            appContent.scrollLeft = scrollLeft - (x - startX) * 2;
+            e.preventDefault();
+        });
+
+        // Переключение фильтров
+        filterToggle.addEventListener('click', () => {
+            filterOptions.classList.toggle('open');
+            filterToggle.textContent = filterOptions.classList.contains('open') ? 'Скрыть фильтры' : 'Фильтры';
+        });
+
+        // Данные предметов
+        const items = [
+            { name: "Пистолет", category: "weapon", price: 60000, discount: 10, profitable: true },
+            { name: "Бронежилет", category: "armor", price: 120000, discount: 5, profitable: false },
+            { name: "Автомат", category: "weapon", price: 80000, discount: 15, profitable: true },
+        ];
+
+        // Инициализация отслеживаемых предметов
+        items.forEach(item => {
+            const trackedItem = document.createElement('div');
+            trackedItem.classList.add('tracked-item', item.profitable ? 'profitable' : 'unprofitable');
+            trackedItem.innerHTML = `<span class="tracked-item-name">${item.name}</span><span>${item.price}</span>`;
+            trackedItemsContainer.appendChild(trackedItem);
+            trackedItem.addEventListener('click', () => alert(`Clicked on ${item.name}`));
+        });
+
+        // Фильтрация и поиск
+        function filterItems() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const minPrice = parseInt(minPriceInput.value) || 0;
+            const maxPrice = parseInt(maxPriceInput.value) || Infinity;
+            const discount = parseInt(discountInput.value) || 0;
+            const category = categorySelect.value;
+
+            const filteredItems = items.filter(item => {
+                return (
+                    item.name.toLowerCase().includes(searchTerm) &&
+                    item.price >= minPrice &&
+                    item.price <= maxPrice &&
+                    item.discount >= discount &&
+                    (!category || item.category === category)
+                );
+            });
+
+            itemDetails.innerHTML = "";
+            if (filteredItems.length > 0 && searchTerm) {
+                itemDetails.style.display = "block";
+                filteredItems.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.classList.add('item');
+                    itemElement.innerHTML = `
+                        <h3>${item.name}</h3>
+                        <div class="price-input">
+                            <input type="number" placeholder="Custom Price" value="${item.price}">
+                            <button class="track-button" data-item-name="${item.name}">Track Item</button>
+                        </div>
+                    `;
+                    itemDetails.appendChild(itemElement);
+
+                    itemElement.querySelector('.track-button').addEventListener('click', () => {
+                        const customPrice = itemElement.querySelector('input[type="number"]').value || item.price;
+                        const trackedItem = document.createElement('div');
+                        trackedItem.classList.add('tracked-item', item.profitable ? 'profitable' : 'unprofitable');
+                        trackedItem.innerHTML = `<span class="tracked-item-name">${item.name}</span><span>${customPrice}</span>`;
+                        trackedItemsContainer.appendChild(trackedItem);
+                        trackedItem.addEventListener('click', () => alert(`Clicked on tracked item: ${item.name}`));
+                    });
+                });
+            } else {
+                itemDetails.style.display = "none";
+            }
+        }
+
+        // Слушатели для фильтров
+        [searchInput, minPriceInput, maxPriceInput, discountInput, categorySelect].forEach(input => {
+            input.addEventListener('input', filterItems);
+        });
+
+        // Предотвращение скроллинга при фокусе
+        searchInput.addEventListener('focus', () => document.body.style.overflow = 'hidden');
+        searchInput.addEventListener('blur', () => document.body.style.overflow = '');
+        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInput.blur(); });
+    </script>
+</body>
+</html>
