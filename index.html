@@ -6,7 +6,7 @@
     <title>Stalcraft Price Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * { user-select: none; outline: none;}
+        * { user-select: none; outline: none; }
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(to bottom, #252525, #1e1e1e);
@@ -17,7 +17,6 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
             font-size: 14px;
         }
         .app-container {
@@ -26,20 +25,30 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             width: 95%;
             max-width: 400px;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding: 15px;
+            padding: 0;
+            overflow: hidden;
         }
-        .app-header { padding: 10px 0; text-align: center; }
+        .app-header { 
+            padding: 10px 15px;
+            text-align: center; 
+            background-color: #333;
+            z-index: 2;
+            position: sticky;
+            top: 0;
+        }
         .app-nav {
             background-color: #444;
-            padding: 8px;
+            padding: 8px 15px;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin: 0 15px 15px 15px;
             overflow-x: auto;
             scrollbar-width: none;
+            position: sticky;
+            top: 58px;
+            z-index: 1;
         }
         .app-nav::-webkit-scrollbar { display: none; }
         .app-nav ul { 
@@ -55,18 +64,22 @@
             text-decoration: none;
             padding: 8px 12px;
             border-radius: 6px;
-            white-space: nowrap; /* Текст в одну строку */
-            display: inline-block; /* Растягивание кнопки */
+            white-space: nowrap;
+            display: inline-block;
+            transition: all 0.3s ease;
         }
         .app-nav a.active { background-color: #555; color: white; }
         .app-content {
             padding: 15px;
             overflow-y: auto;
             flex-grow: 1;
-            scrollbar-width: none;
-            cursor: grab;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #333;
+            -webkit-overflow-scrolling: touch;
         }
-        .app-content::-webkit-scrollbar { display: none; }
+        .app-content::-webkit-scrollbar { width: 6px; }
+        .app-content::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        .app-content::-webkit-scrollbar-track { background: #333; }
         .app-section {
             display: none;
             opacity: 0;
@@ -75,24 +88,30 @@
         .app-section.active {
             display: block;
             opacity: 1;
-            animation: slide-in 0.4s ease-in-out;
+            /* Removed animation: slide-in 0.4s ease-in-out; */
+            animation: fade-slide-in 0.4s ease-out;
         }
-        @keyframes slide-in {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
+        .app-footer { 
+             padding: 20px 15px;
+             text-align: center; 
+             font-size: 0.8em; 
+             color: #888; 
+             background-color: #333;
+             z-index: 2;
+            bottom: 0;
         }
-        .app-footer { padding: 20px 0; text-align: center; font-size: 0.8em; color: #888; }
         .filter-options label, .filter-options select, .filter-options input, button, .key-input {
             margin-bottom: 15px;
             display: block;
             width: 100%;
+            box-sizing: border-box;
             padding: 10px;
             border: 1px solid #555;
             border-radius: 6px;
             background-color: #444;
             color: #ddd;
             font-size: 1em;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         button:hover {
             background-color: #555;
@@ -110,24 +129,29 @@
             border-radius: 8px;
             margin-bottom: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
         }
         .tracked-item.profitable { background-color: #27ae60; }
         .tracked-item.unprofitable { background-color: #c0392b; }
         .tracked-item:hover { background-color: #444; }
         .tracked-item-name { flex-grow: 1; margin-right: 10px; }
         #search-item {
-            width: calc(100% - 22px);
+            width: 100%;
+            box-sizing: border-box;
             padding: 8px 10px;
             border: 1px solid #555;
             border-radius: 20px;
             background-color: #444;
             color: #eee;
             outline: none;
+            margin-bottom: 15px;
         }
+         .search-container {
+             position: relative;
+         }
         .item-details {
             position: absolute;
-            top: 100%;
+            top: calc(100% + 5px);
             left: 0;
             width: 100%;
             background-color: #444;
@@ -138,6 +162,8 @@
             max-height: 200px;
             overflow-y: auto;
             padding: 0;
+            display: none;
+            box-sizing: border-box;
         }
         .item-details .item {
             display: flex;
@@ -146,11 +172,11 @@
             color: #eee;
             border-bottom: 1px solid #555;
             background-color: #383838;
-            border-radius: 8px;
-            margin-bottom: 5px;
             cursor: pointer;
+            transition: background-color 0.2s ease;
         }
-        .item-details .item:last-child { margin-bottom: 0; }
+        .item-details .item:hover { background-color: #444; }
+        .item-details .item:last-child { border-bottom: none; }
         .item-details .item h3 { margin: 0 0 5px 0; font-size: 1em; flex-grow: 1; }
         .item-details .price-input { margin-left: auto; display: flex; align-items: center; }
         .item-details input[type="number"] {
@@ -162,6 +188,7 @@
             color: #eee;
             font-size: 14px;
             margin-right: 8px;
+            box-sizing: border-box;
         }
         .item-details button.track-button {
             background-color: #007bff;
@@ -172,6 +199,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: background-color 0.2s ease;
+            flex-shrink: 0;
         }
         .item-details button.track-button:hover { background-color: #0056b3; }
         .filter-toggle {
@@ -181,11 +209,13 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 8px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .filter-toggle:hover { background-color: #555; }
         .filter-toggle svg { transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
@@ -193,30 +223,31 @@
         .filter-options {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.4s cubic-bezier(0.33, 1, 0.68, 1), transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
             margin-bottom: 15px;
             opacity: 0;
             transform: translateY(-10px);
         }
         .filter-options.open { max-height: 200px; opacity: 1; transform: translateY(0); }
         .filter-options input[type="number"] {
-            width: calc(50% - 10px);
+            width: calc(50% - 5px);
             display: inline-block;
+            box-sizing: border-box;
             -webkit-appearance: none;
             -moz-appearance: textfield;
+            margin-bottom: 10px;
         }
-        .filter-options input[type="number"]:first-child { margin-right: 10px; }
+        .filter-options input[type="number"]:nth-child(odd) { margin-right: 10px; }
         .filter-options input[type="number"]::-webkit-inner-spin-button,
         .filter-options input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .filter-options select { width: 100%; }
-        /* Убираем стрелочки для key-duration */
-        #key-duration {
-            -webkit-appearance: none;
-            -moz-appearance: textfield;
+        .filter-options select { 
+            width: 100%; 
+            box-sizing: border-box; 
+            margin-bottom: 10px;
         }
+        #key-duration { -webkit-appearance: none; -moz-appearance: textfield; }
         #key-duration::-webkit-inner-spin-button,
         #key-duration::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        /* Стили для сгенерированного ключа */
         #generated-key {
             text-align: center;
             margin-top: 10px;
@@ -224,12 +255,12 @@
             padding: 5px;
             border-radius: 4px;
             transition: background-color 0.2s ease;
+            word-break: break-all;
         }
         #generated-key:hover { background-color: #555; }
-        /* Стили для уведомлений */
         .notification {
             position: fixed;
-            bottom: 20px;
+            bottom: 70px;
             left: 50%;
             transform: translateX(-50%);
             padding: 10px 20px;
@@ -237,8 +268,9 @@
             border-radius: 6px;
             color: white;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, bottom 0.3s ease;
             z-index: 100;
+            pointer-events: none;
         }
         .notification.show {
             opacity: 1;
@@ -248,6 +280,210 @@
             from { transform: translateX(-50%) translateY(20px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
         }
+        /* Admin Panel Styles */
+        .admin-block {
+            background-color: #383838;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        .admin-block h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: #fff;
+        }
+        .user-list {
+            max-height: 150px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #383838;
+            -webkit-overflow-scrolling: touch;
+        }
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #555;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .user-item:hover { background-color: #404040; }
+        .user-item:last-child { border-bottom: none; }
+        .user-info { flex-grow: 1; margin-right: 5px; }
+        .user-info span { display: block; }
+        .user-info .plan { color: #bbb; font-size: 0.85em; }
+        .disable-btn {
+            background-color: #c0392b;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .disable-btn:hover { background-color: #a93226; }
+        .broadcast-form textarea {
+            width: 100%;
+            height: 70px;
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            resize: none;
+            font-size: 0.9em;
+            box-sizing: border-box;
+        }
+        .pricing-editor {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        .pricing-editor label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            margin-bottom: 0;
+        }
+        .pricing-editor input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            margin-bottom: 0;
+            box-sizing: border-box;
+        }
+        .pricing-editor button {
+             width: auto;
+             padding: 5px 10px;
+             margin-left: auto;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .settings-grid label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+             display: block;
+        }
+        .settings-grid input[type="number"],
+        .settings-grid select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 0;
+            box-sizing: border-box;
+        }
+
+        /* Ensure images fit within table cells */
+        .pricing-table img {
+            width: 16px;
+            height: 16px;
+            vertical-align: middle;
+        }
+        .pricing-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .pricing-table th, .pricing-table td {
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: center;
+        }
+        .pricing-table th {
+            background-color: #444;
+        }
+         .pricing-table td:first-child {
+             text-align: left;
+         }
+         /* Responsive adjustments */
+        @media (max-width: 400px) {
+            .app-container {
+                width: 100%;
+                border-radius: 0;
+                 min-height: 100vh;
+            }
+             .app-header, .app-nav, .app-footer {
+                 position: static;
+             }
+             .app-content {
+                 /* Adjustments if header/nav/footer are not sticky */
+             }
+            .filter-options input[type="number"] {
+                width: 100%;
+                margin-right: 0;
+            }
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            .pricing-editor {
+                 flex-direction: column;
+                 align-items: stretch;
+             }
+             .pricing-editor button {
+                 margin-left: 0;
+                 margin-top: 10px;
+             }
+            .notification {
+                bottom: 10px;
+                width: 90%;
+            }
+        }
+
+        /* Added new keyframes */
+        @keyframes fade-slide-in {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Add styles to hide spinners for admin number inputs */
+        #admin input[type="number"] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+
+        #admin input[type="number"]::-webkit-inner-spin-button,
+        #admin input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none; /* WebKit */
+            margin: 0;
+        }
+
+        /* Ensure consistent styling for admin number inputs */
+        #admin .pricing-editor input[type="number"] {
+            background-color: #444;
+            color: #ddd;
+            border: 1px solid #555;
+            border-radius: 6px;
+            /* Keep specific layout styles */
+            width: 60px;
+            padding: 5px;
+            margin-bottom: 0;
+            font-size: 0.9em; 
+        }
+
+        #admin .settings-grid input[type="number"] {
+            background-color: #444;
+            color: #ddd;
+            border: 1px solid #555;
+            border-radius: 6px;
+            /* Keep specific layout styles */
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 0;
+            font-size: 0.9em; 
+        }
+
     </style>
 </head>
 <body>
@@ -264,6 +500,7 @@
                 <li><a href="#pricing">Тарифы</a></li>
                 <li><a href="#keygen">Создание ключей</a></li>
                 <li><a href="#activation">Активация ключей</a></li>
+                <li><a href="#admin">Админ-панель</a></li>
             </ul>
         </nav>
         <main class="app-content" id="app-content">
@@ -276,11 +513,12 @@
             </section>
             <section id="instructions" class="app-section">
                 <h2>Инструкция</h2>
+                <p>Здесь будет текст инструкции...</p>
             </section>
             <section id="filtering" class="app-section">
                 <h2>Предметы</h2>
                 <button class="filter-toggle">
-                    Фильтры
+                    <span class="filter-text">Фильтры</span> 
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M2 4L6 8L10 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -298,8 +536,10 @@
                         <option value="other">Прочее</option>
                     </select>
                 </div>
-                <input type="text" id="search-item" placeholder="Поиск предмета">
-                <div class="item-details"></div>
+                 <div class="search-container">
+                     <input type="text" id="search-item" placeholder="Поиск предмета">
+                    <div class="item-details"></div>
+                 </div>
             </section>
             <section id="tracking" class="app-section">
                 <h2>Отслеживаемое</h2>
@@ -316,12 +556,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Цена</td><td>500 руб</td><td>1000 руб</td></tr>
-                        <tr><td>Задержка отправки</td><td>3-5 секунд</td><td><img src="ix.png" alt="Cross"></td></tr>
-                        <tr><td>Доступ на 24 часа</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
-                        <tr><td>Копирование названия по клику</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
-                        <tr><td>Расширенная статистика</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
-                        <tr><td>Статистика по стакам</td><td><img src="ix.png" alt="Cross"></td><td><img src="check.png" alt="Checkmark"></td></tr>
+                        <tr><td>Цена</td><td id="display-price-normal">500 руб</td><td id="display-price-advanced">1000 руб</td></tr>
+                        <tr><td>Задержка отправки</td><td>3-5 секунд</td><td><img src="ix.png" alt="-" title="Нет"></td></tr>
+                        <tr><td>Доступ на 24 часа</td><td><img src="ix.png" alt="-" title="Нет"></td><td><img src="check.png" alt="✓" title="Да"></td></tr>
+                        <tr><td>Копирование названия</td><td><img src="ix.png" alt="-" title="Нет"></td><td><img src="check.png" alt="✓" title="Да"></td></tr>
+                        <tr><td>Расширенная статистика</td><td><img src="ix.png" alt="-" title="Нет"></td><td><img src="check.png" alt="✓" title="Да"></td></tr>
+                        <tr><td>Статистика по стакам</td><td><img src="ix.png" alt="-" title="Нет"></td><td><img src="check.png" alt="✓" title="Да"></td></tr>
                     </tbody>
                 </table>
             </section>
@@ -329,250 +569,594 @@
                 <h2>Создание ключей</h2>
                 <input type="number" id="key-duration" class="key-input" placeholder="Срок действия (дни)">
                 <button id="generate-key">Сгенерировать ключ</button>
-                <p id="generated-key" style="text-align: center; margin-top: 10px;"></p>
+                <p id="generated-key"></p>
             </section>
             <section id="activation" class="app-section">
                 <h2>Активация ключей</h2>
                 <input type="text" id="activation-key" class="key-input" placeholder="Введите ключ (xxxxx-xxxxx-xxxxx)">
                 <button id="activate-key">Активировать</button>
             </section>
+            <section id="admin" class="app-section">
+                <h2>Админ-панель</h2>
+                <div class="admin-block">
+                    <h3>Пользователи (<span id="user-count">3</span>)</h3>
+                    <div class="user-list" id="user-list-container">
+                        </div>
+                </div>
+                <div class="admin-block">
+                    <h3>Рассылка</h3>
+                    <form class="broadcast-form" id="broadcast-form">
+                        <textarea placeholder="Введите сообщение для рассылки" id="broadcast-message"></textarea>
+                        <button type="submit">Отправить</button>
+                    </form>
+                </div>
+                <div class="admin-block">
+                    <h3>Редактирование тарифов</h3>
+                    <div class="pricing-editor" id="pricing-editor-form">
+                        <label>Обычный: <input type="number" id="price-normal" value="500"> руб</label>
+                        <label>Продвинутый: <input type="number" id="price-advanced" value="1000"> руб</label>
+                        <button type="button" id="save-prices">Сохранить</button>
+                    </div>
+                </div>
+                <div class="admin-block">
+                    <h3>Настройка тарифов</h3>
+                    <div class="settings-grid" id="tariff-settings-form">
+                        <label>Слоты (Обычный)<input type="number" id="slots-normal" value="100"></label>
+                        <label>Слоты (Продв.)<input type="number" id="slots-advanced" value="200"></label>
+                        <label>Задержка (сек)<input type="number" id="delay-setting" value="3"></label>
+                    </div>
+                    <button style="margin-top: 10px" id="apply-settings">Применить</button>
+                </div>
+            </section>
         </main>
-        <footer class="app-footer"></footer>
+        <footer class="app-footer">Подвал</footer>
         <div class="notification" id="notification"></div>
     </div>
     <script>
-        const navLinks = document.querySelectorAll('.app-nav a');
-        const sections = document.querySelectorAll('.app-section');
-        const appContent = document.getElementById('app-content');
-        const searchInput = document.getElementById('search-item');
-        const itemDetails = document.querySelector('#filtering .item-details');
-        const trackedItemsContainer = document.getElementById('tracked-items-container');
-        const minPriceInput = document.getElementById('min-price');
-        const maxPriceInput = document.getElementById('max-price');
-        const discountInput = document.getElementById('discount');
-        const categorySelect = document.getElementById('category');
-        const filterToggle = document.querySelector('.filter-toggle');
-        const filterOptions = document.querySelector('.filter-options');
-        const generateKeyBtn = document.getElementById('generate-key');
-        const keyDurationInput = document.getElementById('key-duration');
-        const generatedKeyDisplay = document.getElementById('generated-key');
-        const activateKeyBtn = document.getElementById('activate-key');
-        const activationKeyInput = document.getElementById('activation-key');
-        const notification = document.getElementById('notification');
-        
-        // Subscription data structure
-        let subscriptionData = {
-            level: "Обычная",
-            expirationDate: new Date("2025-01-01"),
-            slots: {
-                used: 44,
-                total: 100
-            },
-            // Store generated keys with their durations
-            generatedKeys: {}
-        };
-        
-        // Function to update subscription display
-        function updateSubscriptionDisplay() {
-            const subscriptionInfoElements = document.querySelectorAll('.subscription-info');
-            subscriptionInfoElements[0].textContent = subscriptionData.level;
-            subscriptionInfoElements[1].textContent = subscriptionData.expirationDate.toISOString().split('T')[0];
-            subscriptionInfoElements[2].textContent = `${subscriptionData.slots.used}/${subscriptionData.slots.total}`;
-        }
-        
-        // Initialize subscription display
-        updateSubscriptionDisplay();
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.app-nav a');
+            const sections = document.querySelectorAll('.app-section');
+            const appContent = document.getElementById('app-content');
+            const searchInput = document.getElementById('search-item');
+            const itemDetails = document.querySelector('#filtering .item-details');
+            const trackedItemsContainer = document.getElementById('tracked-items-container');
+            const minPriceInput = document.getElementById('min-price');
+            const maxPriceInput = document.getElementById('max-price');
+            const discountInput = document.getElementById('discount');
+            const categorySelect = document.getElementById('category');
+            const filterToggle = document.querySelector('.filter-toggle');
+            const filterOptions = document.querySelector('.filter-options');
+            const filterToggleText = filterToggle.querySelector('.filter-text');
+            const generateKeyBtn = document.getElementById('generate-key');
+            const keyDurationInput = document.getElementById('key-duration');
+            const generatedKeyDisplay = document.getElementById('generated-key');
+            const activateKeyBtn = document.getElementById('activate-key');
+            const activationKeyInput = document.getElementById('activation-key');
+            const notification = document.getElementById('notification');
+            const contactSupportBtn = document.getElementById('contact-support');
 
-        // Навигация
-        navLinks.forEach(link => {
-            link.addEventListener('click', e => {
-                e.preventDefault();
+            // Admin Panel Elements
+             const userListContainer = document.getElementById('user-list-container');
+             const userCountSpan = document.getElementById('user-count');
+             const broadcastForm = document.getElementById('broadcast-form');
+             const broadcastMessageInput = document.getElementById('broadcast-message');
+             const savePricesBtn = document.getElementById('save-prices');
+             const applySettingsBtn = document.getElementById('apply-settings');
+             const priceNormalInput = document.getElementById('price-normal');
+             const priceAdvancedInput = document.getElementById('price-advanced');
+             const slotsNormalInput = document.getElementById('slots-normal');
+             const slotsAdvancedInput = document.getElementById('slots-advanced');
+             const delaySettingInput = document.getElementById('delay-setting');
+
+
+            let subscriptionData = {
+                level: "Обычная",
+                expirationDate: new Date("2025-01-01"),
+                slots: { used: 44, total: 100 },
+                generatedKeys: {} // Key: duration
+            };
+            
+             // Mock data (replace with actual API calls)
+            let items = [
+                { id: "pistol", name: "Пистолет", category: "weapons", price: 60000, discount: 10, tracked: false, desiredPrice: 60000 },
+                { id: "armor", name: "Бронежилет", category: "suits", price: 120000, discount: 5, tracked: false, desiredPrice: 120000 },
+                { id: "rifle", name: "Автомат", category: "weapons", price: 80000, discount: 15, tracked: false, desiredPrice: 80000 },
+                { id: "art1", name: "Артефакт Око", category: "artifacts", price: 250000, discount: 0, tracked: false, desiredPrice: 250000 },
+                { id: "attach1", name: "Прицел ПСО", category: "attachments", price: 45000, discount: 20, tracked: false, desiredPrice: 45000 },
+                { id: "other1", name: "Аптечка науч.", category: "other", price: 5000, discount: 0, tracked: false, desiredPrice: 5000 },
+            ];
+
+             let trackedItems = []; // Array of item IDs being tracked
+
+            let adminData = {
+                users: [
+                    { id: '001', name: 'User1', plan: 'Продвинутая', expires: '2025-05-01', enabled: true },
+                    { id: '002', name: 'User2', plan: 'Обычная', expires: '2025-04-15', enabled: true },
+                    { id: '003', name: 'User3', plan: 'Продвинутая', expires: '2025-06-01', enabled: true },
+                ],
+                prices: { normal: 500, advanced: 1000 },
+                 settings: { slotsNormal: 100, slotsAdvanced: 200, delay: 3 }
+            };
+
+            // --- Function to update the displayed prices in the pricing table ---
+            function updatePricingTableDisplay() {
+                const normalPriceCell = document.getElementById('display-price-normal');
+                const advancedPriceCell = document.getElementById('display-price-advanced');
+                if (normalPriceCell && advancedPriceCell) {
+                    normalPriceCell.textContent = `${adminData.prices.normal} руб`;
+                    advancedPriceCell.textContent = `${adminData.prices.advanced} руб`;
+                }
+            }
+
+            function showNotification(message, type = 'success') {
+                notification.textContent = message;
+                notification.style.backgroundColor = type === 'error' ? '#c0392b' : '#27ae60';
+                notification.classList.add('show');
+                setTimeout(() => notification.classList.remove('show'), 3000);
+            }
+
+            function updateSubscriptionDisplay() {
+                const subscriptionInfoElements = document.querySelectorAll('#profile .subscription-info');
+                if (subscriptionInfoElements.length >= 3) {
+                    subscriptionInfoElements[0].textContent = subscriptionData.level;
+                    subscriptionInfoElements[1].textContent = subscriptionData.expirationDate.toISOString().split('T')[0];
+                    subscriptionInfoElements[2].textContent = `${subscriptionData.slots.used}/${subscriptionData.slots.total}`;
+                }
+            }
+
+            function setActiveSection(hash) {
                 navLinks.forEach(l => l.classList.remove('active'));
                 sections.forEach(s => s.classList.remove('active'));
-                link.classList.add('active');
-                document.querySelector(link.getAttribute('href')).classList.add('active');
-            });
-        });
 
-        // Drag-скроллинг
-        let isDragging = false, startX, scrollLeft;
-        appContent.addEventListener('mousedown', e => {
-            isDragging = true;
-            startX = e.pageX - appContent.offsetLeft;
-            scrollLeft = appContent.scrollLeft;
-            appContent.style.cursor = 'grabbing';
-        });
-        appContent.addEventListener('mouseleave', () => { isDragging = false; appContent.style.cursor = 'grab'; });
-        appContent.addEventListener('mouseup', () => { isDragging = false; appContent.style.cursor = 'grab'; });
-        appContent.addEventListener('mousemove', e => {
-            if (!isDragging) return;
-            const x = e.pageX - appContent.offsetLeft;
-            appContent.scrollLeft = scrollLeft - (x - startX) * 2;
-        });
-        appContent.addEventListener('touchstart', e => {
-            isDragging = true;
-            startX = e.touches[0].pageX - appContent.offsetLeft;
-            scrollLeft = appContent.scrollLeft;
-        });
-        appContent.addEventListener('touchend', () => { isDragging = false; });
-        appContent.addEventListener('touchmove', e => {
-            if (!isDragging) return;
-            const x = e.touches[0].pageX - appContent.offsetLeft;
-            appContent.scrollLeft = scrollLeft - (x - startX) * 2;
-            e.preventDefault();
-        });
+                const targetLink = document.querySelector(`.app-nav a[href="${hash}"]`);
+                const targetSection = document.querySelector(hash);
 
-        // Переключение фильтров
-        filterToggle.addEventListener('click', () => {
-            filterOptions.classList.toggle('open');
-            filterToggle.classList.toggle('active');
-            filterToggle.firstChild.textContent = filterOptions.classList.contains('open') ? 'Скрыть фильтры ' : 'Фильтры ';
-        });
-
-        // Данные предметов
-        const items = [
-            { name: "Пистолет", category: "weapon", price: 60000, discount: 10, profitable: true },
-            { name: "Бронежилет", category: "armor", price: 120000, discount: 5, profitable: false },
-            { name: "Автомат", category: "weapon", price: 80000, discount: 15, profitable: true },
-        ];
-
-        // Инициализация отслеживаемых предметов
-        items.forEach(item => {
-            const trackedItem = document.createElement('div');
-            trackedItem.classList.add('tracked-item', item.profitable ? 'profitable' : 'unprofitable');
-            trackedItem.innerHTML = `<span class="tracked-item-name">${item.name}</span><span>${item.price}</span>`;
-            trackedItemsContainer.appendChild(trackedItem);
-            trackedItem.addEventListener('click', () => alert(`Clicked on ${item.name}`));
-        });
-
-        // Фильтрация и поиск
-        function filterItems() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const minPrice = parseInt(minPriceInput.value) || 0;
-            const maxPrice = parseInt(maxPriceInput.value) || Infinity;
-            const discount = parseInt(discountInput.value) || 0;
-            const category = categorySelect.value;
-
-            const filteredItems = items.filter(item => {
-                return (
-                    item.name.toLowerCase().includes(searchTerm) &&
-                    item.price >= minPrice &&
-                    item.price <= maxPrice &&
-                    item.discount >= discount &&
-                    (!category || item.category === category)
-                );
-            });
-
-            itemDetails.innerHTML = "";
-            if (filteredItems.length > 0 && searchTerm) {
-                itemDetails.style.display = "block";
-                filteredItems.forEach(item => {
-                    const itemElement = document.createElement('div');
-                    itemElement.classList.add('item');
-                    itemElement.innerHTML = `
-                        <h3>${item.name}</h3>
-                        <div class="price-input">
-                            <input type="number" placeholder="Custom Price" value="${item.price}">
-                            <button class="track-button" data-item-name="${item.name}">Track Item</button>
-                        </div>
-                    `;
-                    itemDetails.appendChild(itemElement);
-
-                    itemElement.querySelector('.track-button').addEventListener('click', () => {
-                        const customPrice = itemElement.querySelector('input[type="number"]').value || item.price;
-                        const trackedItem = document.createElement('div');
-                        trackedItem.classList.add('tracked-item', item.profitable ? 'profitable' : 'unprofitable');
-                        trackedItem.innerHTML = `<span class="tracked-item-name">${item.name}</span><span>${customPrice}</span>`;
-                        trackedItemsContainer.appendChild(trackedItem);
-                        trackedItem.addEventListener('click', () => alert(`Clicked on tracked item: ${item.name}`));
-                    });
-                });
-            } else {
-                itemDetails.style.display = "none";
-            }
-        }
-
-        // Слушатели для фильтров
-        [searchInput, minPriceInput, maxPriceInput, discountInput, categorySelect].forEach(input => {
-            input.addEventListener('input', filterItems);
-        });
-
-        // Предотвращение скроллинга при фокусе
-        searchInput.addEventListener('focus', () => document.body.style.overflow = 'hidden');
-        searchInput.addEventListener('blur', () => document.body.style.overflow = '');
-        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInput.blur(); });
-
-        // Генерация ключа
-        function generateKey() {
-            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let key = '';
-            for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 5; j++) {
-                    key += characters.charAt(Math.floor(Math.random() * characters.length));
+                if (targetLink && targetSection) {
+                    targetLink.classList.add('active');
+                    targetSection.classList.add('active');
+                    appContent.scrollTop = 0; // Scroll to top when changing sections
+                } else {
+                    // Default to profile if hash is invalid or empty
+                    document.querySelector('.app-nav a[href="#profile"]').classList.add('active');
+                    document.querySelector('#profile').classList.add('active');
                 }
-                if (i < 2) key += '-';
             }
-            return key;
-        }
 
-        generateKeyBtn.addEventListener('click', () => {
-            const duration = parseInt(keyDurationInput.value);
-            if (!duration || duration <= 0) {
-                alert('Введите корректный срок действия');
-                return;
-            }
-            const key = generateKey();
-            // Store the key with its duration
-            subscriptionData.generatedKeys[key] = duration;
-            generatedKeyDisplay.textContent = key;
-            showNotification('Ключ добавлен в базу данных');
-        });
+            // Initial setup based on URL hash or default
+            setActiveSection(window.location.hash || '#profile'); 
 
-        // Копирование ключа по клику
-        generatedKeyDisplay.addEventListener('click', () => {
-            const key = generatedKeyDisplay.textContent;
-            if (key) {
-                navigator.clipboard.writeText(key);
-                showNotification('Ключ скопирован');
-            }
-        });
+            navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    const targetHash = link.getAttribute('href');
+                    setActiveSection(targetHash);
+                     window.location.hash = targetHash; // Update URL hash
+                });
+            });
 
-        // Активация ключа
-        activateKeyBtn.addEventListener('click', () => {
-            const key = activationKeyInput.value;
-            if (!/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(key)) {
-                alert('Неверный формат ключа');
-                return;
+            // Update active section if hash changes (e.g., back/forward buttons)
+            window.addEventListener('hashchange', () => {
+                 setActiveSection(window.location.hash);
+             });
+
+
+            // --- Filter/Search Section Logic ---
+
+            filterToggle.addEventListener('click', () => {
+                filterOptions.classList.toggle('open');
+                filterToggle.classList.toggle('active');
+                 filterToggleText.textContent = filterOptions.classList.contains('open') ? 'Скрыть фильтры' : 'Фильтры';
+            });
+           
+            function renderItemSuggestions(filteredItems) {
+                itemDetails.innerHTML = "";
+                if (filteredItems.length > 0) {
+                    itemDetails.style.display = "block";
+                    filteredItems.forEach(item => {
+                        const itemElement = document.createElement('div');
+                        itemElement.classList.add('item');
+                        itemElement.dataset.itemId = item.id; // Store item ID
+                        itemElement.innerHTML = `
+                            <h3>${item.name} (${item.price} руб)</h3>
+                            <div class="price-input">
+                                <input type="number" class="custom-price-input" placeholder="Желаемая цена" value="${item.desiredPrice || ''}">
+                                <button class="track-button">${item.tracked ? 'Отслеживается' : 'Отслеживать'}</button>
+                            </div>
+                        `;
+                        itemDetails.appendChild(itemElement);
+                        
+                        const trackButton = itemElement.querySelector('.track-button');
+                         const customPriceInput = itemElement.querySelector('.custom-price-input');
+
+                        if (item.tracked) {
+                             trackButton.disabled = true; // Disable if already tracked
+                         }
+
+                        trackButton.addEventListener('click', (e) => {
+                             e.stopPropagation(); // Prevent item click event
+                            const desiredPrice = parseInt(customPriceInput.value) || item.price; // Use input or default
+                            trackItem(item.id, desiredPrice);
+                             filterItems(); // Re-render suggestions to update button state
+                             renderTrackedItems(); // Update the tracking list
+                        });
+                         
+                         // Add item to tracking on clicking the item row itself (optional)
+                         itemElement.addEventListener('click', () => {
+                              const desiredPrice = parseInt(customPriceInput.value) || item.price;
+                              trackItem(item.id, desiredPrice);
+                              filterItems();
+                              renderTrackedItems();
+                         });
+                    });
+                } else {
+                    itemDetails.style.display = "none";
+                }
             }
-            
-            // Check if key exists in generated keys (for demonstration)
-            // In real implementation, this would check against a database
-            let keyDuration = 30; // Default duration if key not found
-            
-            if (subscriptionData.generatedKeys[key]) {
-                keyDuration = subscriptionData.generatedKeys[key];
-                // Remove used key
-                delete subscriptionData.generatedKeys[key];
+
+            function filterItems() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const minPrice = parseInt(minPriceInput.value) || 0;
+                const maxPrice = parseInt(maxPriceInput.value) || Infinity;
+                const discount = parseInt(discountInput.value) || 0;
+                const category = categorySelect.value;
+
+                const filtered = items.filter(item => {
+                    const nameMatch = item.name.toLowerCase().includes(searchTerm);
+                    const priceMatch = item.price >= minPrice && item.price <= maxPrice;
+                    const discountMatch = item.discount >= discount;
+                    const categoryMatch = !category || item.category === category;
+                    return nameMatch && priceMatch && discountMatch && categoryMatch;
+                });
+                
+                 // Update 'tracked' status in the filtered list
+                 const trackedIds = new Set(trackedItems);
+                 filtered.forEach(item => item.tracked = trackedIds.has(item.id));
+
+                renderItemSuggestions(filtered);
             }
+
+            [searchInput, minPriceInput, maxPriceInput, discountInput, categorySelect].forEach(input => {
+                input.addEventListener('input', filterItems);
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                 if (!itemDetails.contains(e.target) && e.target !== searchInput) {
+                     itemDetails.style.display = 'none';
+                 }
+             });
             
-            // Extend subscription
-            const currentDate = new Date(subscriptionData.expirationDate);
-            currentDate.setDate(currentDate.getDate() + keyDuration);
-            subscriptionData.expirationDate = currentDate;
+             searchInput.addEventListener('focus', filterItems); // Show suggestions on focus if input has text
+             searchInput.addEventListener('blur', () => {
+                 // Delay hiding to allow clicking on suggestions
+                 setTimeout(() => {
+                     if (!itemDetails.matches(':hover')) { // Hide only if mouse isn't over suggestions
+                         itemDetails.style.display = 'none';
+                     }
+                 }, 150);
+             });
+             searchInput.addEventListener('keydown', e => { 
+                 if (e.key === 'Enter') {
+                     searchInput.blur(); 
+                     itemDetails.style.display = 'none'; 
+                 }
+             });
+
+             // --- Tracking Section Logic ---
+            function trackItem(itemId, desiredPrice) {
+                 if (trackedItems.length >= subscriptionData.slots.total) {
+                     showNotification('Достигнут лимит слотов отслеживания', 'error');
+                     return;
+                 }
+                 if (!trackedItems.includes(itemId)) {
+                     const item = items.find(i => i.id === itemId);
+                     if (item) {
+                         item.desiredPrice = desiredPrice; // Store desired price
+                         trackedItems.push(itemId);
+                         subscriptionData.slots.used = trackedItems.length; // Update used slots
+                         updateSubscriptionDisplay();
+                         showNotification(`Предмет "${item.name}" добавлен в отслеживаемое`);
+                     }
+                 } else {
+                     showNotification('Предмет уже отслеживается', 'error');
+                 }
+             }
+
+             function untrackItem(itemId) {
+                 const index = trackedItems.indexOf(itemId);
+                 if (index > -1) {
+                     const item = items.find(i => i.id === itemId);
+                     trackedItems.splice(index, 1);
+                     subscriptionData.slots.used = trackedItems.length;
+                     updateSubscriptionDisplay();
+                     renderTrackedItems(); // Re-render the list
+                     filterItems(); // Update suggestions if filter section is active
+                     if (item) {
+                         showNotification(`Предмет "${item.name}" удален из отслеживаемого`);
+                     }
+                 }
+             }
+
+             function renderTrackedItems() {
+                trackedItemsContainer.innerHTML = ''; // Clear existing items
+                 if (trackedItems.length === 0) {
+                     trackedItemsContainer.innerHTML = '<p>Нет отслеживаемых предметов.</p>';
+                     return;
+                 }
+                 
+                trackedItems.forEach(itemId => {
+                    const item = items.find(i => i.id === itemId);
+                    if (item) {
+                         // Determine profitability based on desired price
+                         const isProfitable = item.price <= item.desiredPrice; 
+                        const trackedItemElement = document.createElement('div');
+                        trackedItemElement.classList.add('tracked-item', isProfitable ? 'profitable' : 'unprofitable');
+                        trackedItemElement.innerHTML = `
+                            <span class="tracked-item-name">${item.name} (Цель: ${item.desiredPrice})</span>
+                            <span>${item.price} руб</span>
+                            <button class="untrack-btn" data-item-id="${item.id}" style="background: #e74c3c; color: white; border: none; padding: 3px 6px; border-radius: 4px; margin-left: 8px; cursor: pointer;">X</button>
+                        `;
+                         trackedItemsContainer.appendChild(trackedItemElement);
+
+                        // Add click listener for untracking
+                        trackedItemElement.querySelector('.untrack-btn').addEventListener('click', (e) => {
+                             e.stopPropagation(); // Prevent potential parent clicks
+                             untrackItem(item.id);
+                         });
+                         
+                         // Example: Click to copy name (if needed)
+                         trackedItemElement.addEventListener('click', () => {
+                             navigator.clipboard.writeText(item.name)
+                                 .then(() => showNotification(`Название "${item.name}" скопировано`))
+                                 .catch(() => showNotification('Не удалось скопировать', 'error'));
+                         });
+                    }
+                });
+            }
+
+            // --- Key Generation Logic ---
+            function generateKeyString() {
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let key = '';
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 5; j++) {
+                        key += characters.charAt(Math.floor(Math.random() * characters.length));
+                    }
+                    if (i < 2) key += '-';
+                }
+                return key;
+            }
+
+            generateKeyBtn.addEventListener('click', () => {
+                const duration = parseInt(keyDurationInput.value);
+                if (!duration || duration <= 0) {
+                    showNotification('Введите корректный срок действия (в днях)', 'error');
+                    return;
+                }
+                const key = generateKeyString();
+                 // Simulate adding key to backend
+                 subscriptionData.generatedKeys[key] = duration; 
+                generatedKeyDisplay.textContent = key;
+                 generatedKeyDisplay.style.display = 'block'; // Show the key
+                showNotification(`Ключ на ${duration} дней сгенерирован`);
+                 keyDurationInput.value = ''; // Clear input
+            });
+
+            generatedKeyDisplay.addEventListener('click', () => {
+                const key = generatedKeyDisplay.textContent;
+                if (key) {
+                    navigator.clipboard.writeText(key)
+                        .then(() => showNotification('Ключ скопирован'))
+                        .catch(() => showNotification('Не удалось скопировать ключ', 'error'));
+                }
+            });
+
+             // --- Key Activation Logic ---
+            activateKeyBtn.addEventListener('click', () => {
+                const key = activationKeyInput.value.trim().toUpperCase();
+                if (!/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(key)) {
+                    showNotification('Неверный формат ключа (должен быть XXXXX-XXXXX-XXXXX)', 'error');
+                    return;
+                }
+
+                 // Simulate checking and using the key (replace with actual backend call)
+                 let keyDuration = 30; // Default duration if key not found in generatedKeys (e.g., purchased key)
+                 let keyFound = false;
+
+                 // Check if it's a generated key first
+                 if (subscriptionData.generatedKeys[key]) {
+                     keyDuration = subscriptionData.generatedKeys[key];
+                     delete subscriptionData.generatedKeys[key]; // Consume the key
+                     keyFound = true;
+                 } else {
+                     // Here you would typically check against a database of valid purchased keys
+                     // For this example, assume any valid format key works with default duration
+                     // In a real app, you'd have an API call here. If the API call fails, show error.
+                     keyFound = true; // Simulate finding a valid purchased key
+                 }
+
+                if (keyFound) {
+                    const currentExpiration = new Date(subscriptionData.expirationDate);
+                     // If subscription is expired, start from today, otherwise extend
+                     const startDate = currentExpiration < new Date() ? new Date() : currentExpiration;
+                     startDate.setDate(startDate.getDate() + keyDuration);
+                    subscriptionData.expirationDate = startDate;
+                    
+                    // Potentially upgrade plan based on key type - needs more logic
+                    // subscriptionData.level = "Продвинутая"; // Example upgrade
+
+                    updateSubscriptionDisplay();
+                    showNotification(`Ключ успешно активирован! Подписка продлена на ${keyDuration} дней.`);
+                    activationKeyInput.value = ''; // Clear input field
+                } else {
+                    showNotification('Ключ не найден или уже использован', 'error');
+                }
+            });
             
-            // Update display
+            // --- Admin Panel Logic ---
+             function renderAdminUsers() {
+                 userListContainer.innerHTML = '';
+                 userCountSpan.textContent = adminData.users.length;
+                 adminData.users.forEach(user => {
+                     const userItem = document.createElement('div');
+                     userItem.classList.add('user-item');
+                     userItem.innerHTML = `
+                         <div class="user-info">
+                             <span>${user.name} (ID: ${user.id})</span>
+                             <span class="plan">${user.expires} | ${user.plan}</span>
+                         </div>
+                         <button class="disable-btn" data-user-id="${user.id}" style="background-color: ${user.enabled ? '#c0392b' : '#27ae60'};">
+                             ${user.enabled ? 'Отключить' : 'Включить'}
+                         </button>
+                     `;
+                     userListContainer.appendChild(userItem);
+
+                     userItem.querySelector('.disable-btn').addEventListener('click', (e) => {
+                         const userId = e.target.dataset.userId;
+                         toggleUserStatus(userId);
+                     });
+                 });
+             }
+
+             function toggleUserStatus(userId) {
+                 const user = adminData.users.find(u => u.id === userId);
+                 if (user) {
+                     user.enabled = !user.enabled;
+                     // Here: Send API request to update user status on the backend
+                     console.log(`Simulating ${user.enabled ? 'enabling' : 'disabling'} user ${userId}`);
+                     renderAdminUsers(); // Re-render the list to update button text/style
+                     showNotification(`Статус пользователя ${user.name} изменен`);
+                 }
+             }
+
+             broadcastForm.addEventListener('submit', (e) => {
+                 e.preventDefault();
+                 const message = broadcastMessageInput.value.trim();
+                 if (message) {
+                     // Here: Send API request to broadcast the message
+                     console.log("Simulating broadcast:", message);
+                     showNotification('Рассылка отправлена');
+                     broadcastMessageInput.value = ''; // Clear textarea
+                 } else {
+                     showNotification('Введите сообщение для рассылки', 'error');
+                 }
+             });
+
+             savePricesBtn.addEventListener('click', () => {
+                 const normalPrice = parseInt(priceNormalInput.value);
+                 const advancedPrice = parseInt(priceAdvancedInput.value);
+                 if (!isNaN(normalPrice) && !isNaN(advancedPrice) && normalPrice >= 0 && advancedPrice >= 0) {
+                     adminData.prices.normal = normalPrice;
+                     adminData.prices.advanced = advancedPrice;
+                     // Here: Send API request to save new prices
+                     console.log("Simulating save prices:", adminData.prices);
+                     updatePricingTableDisplay();
+                     showNotification('Цены тарифов сохранены');
+                 } else {
+                     showNotification('Введите корректные цены', 'error');
+                 }
+             });
+
+             applySettingsBtn.addEventListener('click', () => {
+                 const slotsNormal = parseInt(slotsNormalInput.value);
+                 const slotsAdvanced = parseInt(slotsAdvancedInput.value);
+                 const delay = parseInt(delaySettingInput.value);
+
+                 if (!isNaN(slotsNormal) && slotsNormal >= 0 &&
+                     !isNaN(slotsAdvanced) && slotsAdvanced >= 0 &&
+                     !isNaN(delay) && delay >= 0) {
+                     
+                     adminData.settings.slotsNormal = slotsNormal;
+                     adminData.settings.slotsAdvanced = slotsAdvanced;
+                     adminData.settings.delay = delay;
+                     // Here: Send API request to apply new settings
+                     console.log("Simulating apply settings:", adminData.settings);
+                     showNotification('Настройки тарифов применены');
+                 } else {
+                     showNotification('Введите корректные числовые значения для слотов и задержки', 'error');
+                 }
+             });
+
+             // Function to load admin panel data (call when admin section becomes active)
+             function loadAdminData() {
+                 // Simulate fetching data
+                 priceNormalInput.value = adminData.prices.normal;
+                 priceAdvancedInput.value = adminData.prices.advanced;
+                 slotsNormalInput.value = adminData.settings.slotsNormal;
+                 slotsAdvancedInput.value = adminData.settings.slotsAdvanced;
+                 delaySettingInput.value = adminData.settings.delay;
+                 renderAdminUsers();
+             }
+             
+             // Load admin data if admin tab is initially active
+             if (window.location.hash === '#admin') {
+                 loadAdminData();
+             }
+            
+             // Use MutationObserver to load data when the section becomes active
+             const observer = new MutationObserver((mutationsList) => {
+                 for(let mutation of mutationsList) {
+                     if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                         const adminSection = document.getElementById('admin');
+                         if (adminSection.classList.contains('active')) {
+                             loadAdminData();
+                         }
+                     }
+                 }
+             });
+             observer.observe(document.getElementById('admin'), { attributes: true });
+             
+             // --- Contact Support ---
+             contactSupportBtn.addEventListener('click', () => {
+                 // Replace with your actual support link or action
+                 window.location.href = 'mailto:support@example.com?subject=Stalcraft Price Tracker Support'; 
+                 showNotification('Открытие почтового клиента...');
+             });
+
+
+            // Initial data rendering
             updateSubscriptionDisplay();
+            renderTrackedItems(); 
+            updatePricingTableDisplay();
+             // filterItems(); // Optional: run initial filter if needed
             
-            showNotification(`Ключ активирован! Подписка продлена на ${keyDuration} дней`);
-            activationKeyInput.value = '';
-        });
+            // --- Touch Scroll Logic (Removed) ---
+            // Native scrolling via CSS `overflow-y: auto` and `-webkit-overflow-scrolling: touch` 
+            // is generally preferred and smoother than manual JS implementation.
+            // The JS implementation below is removed.
 
-        // Показ уведомления
-        function showNotification(message) {
-            notification.textContent = message;
-            notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), 3000);
-        }
+            /* // Removed JS-based touch scrolling
+            let isDragging = false, startY, scrollTop;
+            appContent.addEventListener('touchstart', e => {
+                // Allow native scrolling for elements that should scroll internally
+                 if (e.target.closest('.user-list, .item-details')) { 
+                    isDragging = false;
+                     return;
+                 }
+                isDragging = true;
+                startY = e.touches[0].pageY - appContent.offsetTop;
+                scrollTop = appContent.scrollTop;
+                 // appContent.style.cursor = 'grabbing'; // Not needed for touch
+            });
+            appContent.addEventListener('touchend', () => {
+                if (isDragging) { // Only reset if we were dragging the main content
+                    isDragging = false;
+                     // appContent.style.cursor = 'default'; // Not needed for touch
+                 }
+            });
+            appContent.addEventListener('touchmove', e => {
+                 if (!isDragging) return; // Don't interfere with internal scrolls
+                
+                 // Basic check for vertical scroll intention
+                 // More sophisticated logic might be needed to avoid accidental scrolls
+                 
+                e.preventDefault(); // Prevent default browser scroll ONLY when dragging main content
+                const y = e.touches[0].pageY - appContent.offsetTop;
+                appContent.scrollTop = scrollTop - (y - startY);
+            }, { passive: false }); // Need passive: false to call preventDefault
+            */
+
+        }); // End DOMContentLoaded
     </script>
 </body>
 </html>
