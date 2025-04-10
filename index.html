@@ -6,6 +6,7 @@
     <title>Stalcraft Price Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        * { user-select: none; }
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(to bottom, #252525, #1e1e1e);
@@ -18,9 +19,7 @@
             min-height: 100vh;
             overflow: hidden;
             font-size: 14px;
-            user-select: none;
         }
-
         .app-container {
             background-color: #333;
             border-radius: 12px;
@@ -33,7 +32,6 @@
             min-height: 100vh;
             padding: 15px;
         }
-
         .app-header { padding: 10px 0; text-align: center; }
         .app-nav {
             background-color: #444;
@@ -44,16 +42,23 @@
             scrollbar-width: none;
         }
         .app-nav::-webkit-scrollbar { display: none; }
-        .app-nav ul { list-style: none; padding: 0; margin: 0; display: flex; }
+        .app-nav ul { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+        }
         .app-nav li { margin-right: 10px; }
         .app-nav a {
             color: #ccc;
             text-decoration: none;
             padding: 8px 12px;
             border-radius: 6px;
+            white-space: nowrap; /* Текст в одну строку */
+            display: inline-block; /* Растягивание кнопки */
         }
         .app-nav a.active { background-color: #555; color: white; }
-
         .app-content {
             padding: 15px;
             overflow-y: auto;
@@ -62,7 +67,6 @@
             cursor: grab;
         }
         .app-content::-webkit-scrollbar { display: none; }
-
         .app-section {
             display: none;
             opacity: 0;
@@ -77,13 +81,8 @@
             from { transform: translateX(100%); }
             to { transform: translateX(0); }
         }
-
         .app-footer { padding: 20px 0; text-align: center; font-size: 0.8em; color: #888; }
-
-        .filter-options label,
-        .filter-options select,
-        .filter-options input,
-        button {
+        .filter-options label, .filter-options select, .filter-options input, button, .key-input {
             margin-bottom: 15px;
             display: block;
             width: 100%;
@@ -101,7 +100,6 @@
             border-color: #666;
             cursor: pointer;
         }
-
         .tracked-item {
             display: flex;
             justify-content: space-between;
@@ -118,7 +116,6 @@
         .tracked-item.unprofitable { background-color: #c0392b; }
         .tracked-item:hover { background-color: #444; }
         .tracked-item-name { flex-grow: 1; margin-right: 10px; }
-
         #search-item {
             width: calc(100% - 22px);
             padding: 8px 10px;
@@ -128,7 +125,6 @@
             color: #eee;
             outline: none;
         }
-
         .item-details {
             position: absolute;
             top: 100%;
@@ -178,8 +174,6 @@
             transition: background-color 0.2s ease;
         }
         .item-details button.track-button:hover { background-color: #0056b3; }
-
-        /* Стили для фильтров */
         .filter-toggle {
             background-color: #444;
             color: white;
@@ -194,41 +188,66 @@
             gap: 8px;
         }
         .filter-toggle:hover { background-color: #555; }
-        .filter-toggle svg { 
-            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
-        }
-        .filter-options.open + .filter-toggle svg,
-        .filter-toggle.active svg { 
-            transform: rotate(90deg); 
-        }
+        .filter-toggle svg { transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .filter-toggle.active svg { transform: rotate(90deg); }
         .filter-options {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1), 
-                       opacity 0.4s cubic-bezier(0.33, 1, 0.68, 1), 
-                       transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+            transition: max-height 0.4s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.4s cubic-bezier(0.33, 1, 0.68, 1), transform 0.4s cubic-bezier(0.33, 1, 0.68, 1);
             margin-bottom: 15px;
             opacity: 0;
             transform: translateY(-10px);
         }
-        .filter-options.open { 
-            max-height: 200px; 
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .filter-options.open { max-height: 200px; opacity: 1; transform: translateY(0); }
         .filter-options input[type="number"] {
             width: calc(50% - 10px);
             display: inline-block;
-            -webkit-appearance: none; /* Убираем стрелочки */
-            -moz-appearance: textfield; /* Firefox */
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
         }
         .filter-options input[type="number"]:first-child { margin-right: 10px; }
         .filter-options input[type="number"]::-webkit-inner-spin-button,
-        .filter-options input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none; /* Chrome, Safari, Edge */
-            margin: 0;
-        }
+        .filter-options input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .filter-options select { width: 100%; }
+        /* Убираем стрелочки для key-duration */
+        #key-duration {
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+        }
+        #key-duration::-webkit-inner-spin-button,
+        #key-duration::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Стили для сгенерированного ключа */
+        #generated-key {
+            text-align: center;
+            margin-top: 10px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+        #generated-key:hover { background-color: #555; }
+        /* Стили для уведомлений */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: #27ae60;
+            border-radius: 6px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+        .notification.show {
+            opacity: 1;
+            animation: slide-up 0.3s ease-in-out;
+        }
+        @keyframes slide-up {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -243,6 +262,8 @@
                 <li><a href="#filtering">Предметы</a></li>
                 <li><a href="#tracking">Отслеживаемое</a></li>
                 <li><a href="#pricing">Тарифы</a></li>
+                <li><a href="#keygen">Создание ключей</a></li>
+                <li><a href="#activation">Активация ключей</a></li>
             </ul>
         </nav>
         <main class="app-content" id="app-content">
@@ -304,8 +325,20 @@
                     </tbody>
                 </table>
             </section>
+            <section id="keygen" class="app-section">
+                <h2>Создание ключей</h2>
+                <input type="number" id="key-duration" class="key-input" placeholder="Срок действия (дни)">
+                <button id="generate-key">Сгенерировать ключ</button>
+                <p id="generated-key" style="text-align: center; margin-top: 10px;"></p>
+            </section>
+            <section id="activation" class="app-section">
+                <h2>Активация ключей</h2>
+                <input type="text" id="activation-key" class="key-input" placeholder="Введите ключ (xxxxx-xxxxx-xxxxx)">
+                <button id="activate-key">Активировать</button>
+            </section>
         </main>
         <footer class="app-footer"></footer>
+        <div class="notification" id="notification"></div>
     </div>
     <script>
         const navLinks = document.querySelectorAll('.app-nav a');
@@ -320,6 +353,12 @@
         const categorySelect = document.getElementById('category');
         const filterToggle = document.querySelector('.filter-toggle');
         const filterOptions = document.querySelector('.filter-options');
+        const generateKeyBtn = document.getElementById('generate-key');
+        const keyDurationInput = document.getElementById('key-duration');
+        const generatedKeyDisplay = document.getElementById('generated-key');
+        const activateKeyBtn = document.getElementById('activate-key');
+        const activationKeyInput = document.getElementById('activation-key');
+        const notification = document.getElementById('notification');
 
         // Навигация
         navLinks.forEach(link => {
@@ -439,6 +478,57 @@
         searchInput.addEventListener('focus', () => document.body.style.overflow = 'hidden');
         searchInput.addEventListener('blur', () => document.body.style.overflow = '');
         searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchInput.blur(); });
+
+        // Генерация ключа
+        function generateKey() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let key = '';
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 5; j++) {
+                    key += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+                if (i < 2) key += '-';
+            }
+            return key;
+        }
+
+        generateKeyBtn.addEventListener('click', () => {
+            const duration = keyDurationInput.value;
+            if (!duration || duration <= 0) {
+                alert('Введите корректный срок действия');
+                return;
+            }
+            const key = generateKey();
+            generatedKeyDisplay.textContent = key;
+            showNotification('Ключ добавлен в базу данных');
+        });
+
+        // Копирование ключа по клику
+        generatedKeyDisplay.addEventListener('click', () => {
+            const key = generatedKeyDisplay.textContent;
+            if (key) {
+                navigator.clipboard.writeText(key);
+                showNotification('Ключ скопирован');
+            }
+        });
+
+        // Активация ключа
+        activateKeyBtn.addEventListener('click', () => {
+            const key = activationKeyInput.value;
+            if (!/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(key)) {
+                alert('Неверный формат ключа');
+                return;
+            }
+            showNotification('Ключ активирован');
+            activationKeyInput.value = '';
+        });
+
+        // Показ уведомления
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
     </script>
 </body>
 </html>
