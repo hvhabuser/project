@@ -6,7 +6,7 @@
     <title>Stalcraft Price Tracker</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * { user-select: none; }
+        * { user-select: none; outline: none;}
         body {
             font-family: 'Roboto', sans-serif;
             background: linear-gradient(to bottom, #252525, #1e1e1e);
@@ -359,6 +359,29 @@
         const activateKeyBtn = document.getElementById('activate-key');
         const activationKeyInput = document.getElementById('activation-key');
         const notification = document.getElementById('notification');
+        
+        // Subscription data structure
+        let subscriptionData = {
+            level: "Обычная",
+            expirationDate: new Date("2025-01-01"),
+            slots: {
+                used: 44,
+                total: 100
+            },
+            // Store generated keys with their durations
+            generatedKeys: {}
+        };
+        
+        // Function to update subscription display
+        function updateSubscriptionDisplay() {
+            const subscriptionInfoElements = document.querySelectorAll('.subscription-info');
+            subscriptionInfoElements[0].textContent = subscriptionData.level;
+            subscriptionInfoElements[1].textContent = subscriptionData.expirationDate.toISOString().split('T')[0];
+            subscriptionInfoElements[2].textContent = `${subscriptionData.slots.used}/${subscriptionData.slots.total}`;
+        }
+        
+        // Initialize subscription display
+        updateSubscriptionDisplay();
 
         // Навигация
         navLinks.forEach(link => {
@@ -493,12 +516,14 @@
         }
 
         generateKeyBtn.addEventListener('click', () => {
-            const duration = keyDurationInput.value;
+            const duration = parseInt(keyDurationInput.value);
             if (!duration || duration <= 0) {
                 alert('Введите корректный срок действия');
                 return;
             }
             const key = generateKey();
+            // Store the key with its duration
+            subscriptionData.generatedKeys[key] = duration;
             generatedKeyDisplay.textContent = key;
             showNotification('Ключ добавлен в базу данных');
         });
@@ -519,7 +544,26 @@
                 alert('Неверный формат ключа');
                 return;
             }
-            showNotification('Ключ активирован');
+            
+            // Check if key exists in generated keys (for demonstration)
+            // In real implementation, this would check against a database
+            let keyDuration = 30; // Default duration if key not found
+            
+            if (subscriptionData.generatedKeys[key]) {
+                keyDuration = subscriptionData.generatedKeys[key];
+                // Remove used key
+                delete subscriptionData.generatedKeys[key];
+            }
+            
+            // Extend subscription
+            const currentDate = new Date(subscriptionData.expirationDate);
+            currentDate.setDate(currentDate.getDate() + keyDuration);
+            subscriptionData.expirationDate = currentDate;
+            
+            // Update display
+            updateSubscriptionDisplay();
+            
+            showNotification(`Ключ активирован! Подписка продлена на ${keyDuration} дней`);
             activationKeyInput.value = '';
         });
 
